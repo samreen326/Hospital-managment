@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MediCare Hospital Database</title>
+<style>
+:root{--bg:#f6f8fb;--card:#fff;--tx:#1c2733;--mu:#667585;--pr:#0f766e;--pr2:#e0f2f1;--bd:#dde4ec;--er:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10171e;--card:#18222c;--tx:#e6edf3;--mu:#93a4b5;--pr:#2dd4bf;--pr2:#12332f;--bd:#2a3846;--er:#ff8a80}}
+:root[data-theme="dark"]{--bg:#10171e;--card:#18222c;--tx:#e6edf3;--mu:#93a4b5;--pr:#2dd4bf;--pr2:#12332f;--bd:#2a3846;--er:#ff8a80}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--pr);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) header{color:#06201d}}
+header h1{font-size:18px;margin:0;flex:1}header small{opacity:.85}
+nav{display:flex;gap:4px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--bd);padding:6px 10px}
+nav button{border:0;background:none;color:var(--mu);padding:8px 14px;border-radius:8px;cursor:pointer;font:inherit;white-space:nowrap}
+nav button.on{background:var(--pr2);color:var(--pr);font-weight:600}
+main{max-width:1100px;margin:0 auto;padding:16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.card,.box{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px}
+.card b{display:block;font-size:26px;color:var(--pr)}.card span{color:var(--mu);font-size:13px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+h2{font-size:17px;margin:0 0 10px}
+.tw{overflow-x:auto;border:1px solid var(--bd);border-radius:10px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{background:var(--pr2);color:var(--pr);position:sticky;top:0}
+form.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px;align-items:end}
+label{font-size:12px;color:var(--mu);display:block}
+input,select,textarea{width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+textarea{font:13px/1.4 ui-monospace,Menlo,Consolas,monospace;min-height:110px}
+button.b{background:var(--pr);color:#fff;border:0;padding:9px 14px;border-radius:8px;cursor:pointer;font:inherit;font-weight:600}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) button.b{color:#06201d}}
+button.s{background:none;border:1px solid var(--bd);color:var(--tx);padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px}
+button.s.d{color:var(--er)}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px}.bar i{display:block;height:14px;background:var(--pr);border-radius:4px}.bar span:first-child{width:130px;color:var(--mu)}
+.msg{padding:8px 12px;border-radius:8px;margin:8px 0;background:var(--pr2);color:var(--pr);font-size:13px}.msg.e{background:transparent;border:1px solid var(--er);color:var(--er)}
+pre{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px;overflow-x:auto;font-size:12px;margin:6px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.tag{padding:2px 8px;border-radius:10px;font-size:12px;background:var(--pr2);color:var(--pr)}
+</style></head><body>
+<header><h1>MediCare Hospital Database <small>DBMS Case Study | SQLite running live in your browser</small></h1></header>
+<nav id="nav"></nav><main id="m">Loading database engine...</main>
+<script>/*SQLJS*/</script>
+<script>
+const SCHEMA=/*SCHEMA*/;
+/*SEED*/
+let db,tab="dash",msg="";
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function all(sql,p=[]){const r=db.exec(sql,p);if(!r.length)return{cols:[],rows:[]};return{cols:r[0].columns,rows:r[0].values}}
+function objs(sql,p){const r=all(sql,p);return r.rows.map(v=>Object.fromEntries(r.cols.map((c,i)=>[c,v[i]])))}
+function run(sql,p=[],ok="Done"){try{db.run(sql,p);msg=ok;save();}catch(e){msg="Error: "+e.message}render()}
+function save(){try{localStorage.setItem("hospdb",btoa(String.fromCharCode(...db.export())))}catch(e){}}
+function table(r,actions){return `<div class="tw"><table><tr>${r.cols.map(c=>`<th>${esc(c)}</th>`).join("")}${actions?"<th></th>":""}</tr>${r.rows.map(v=>`<tr>${v.map(x=>`<td>${x===null?'<i style="color:var(--mu)">NULL</i>':esc(x)}</td>`).join("")}${actions?`<td>${actions(v)}</td>`:""}</tr>`).join("")||`<tr><td>No rows</td></tr>`}</table></div>`}
+const opts=(sql,sel)=>objs(sql).map(o=>{const k=Object.values(o);return `<option value="${esc(k[0])}">${esc(k[1])}</option>`}).join("");
+const M=()=>msg?`<div class="msg ${msg.startsWith("Error")?"e":""}">${esc(msg)}</div>`:"";
+const pages={
+dash(){const c=t=>all(`SELECT COUNT(*) FROM ${t}`).rows[0][0];
+ const dep=all(`SELECT dep.name, COUNT(a.appt_id) n FROM department dep LEFT JOIN doctor d USING(dept_id) LEFT JOIN appointment a USING(doctor_id) GROUP BY dep.dept_id ORDER BY n DESC`).rows;
+ const mx=Math.max(...dep.map(r=>r[1]),1);
+ const rev=all(`SELECT COALESCE(SUM(amount),0), COALESCE(SUM(CASE WHEN paid=1 THEN amount END),0) FROM bill`).rows[0];
+ return `<div class="cards"><div class="card"><b>${c("patient")}</b><span>Patients</span></div><div class="card"><b>${c("doctor")}</b><span>Doctors</span></div><div class="card"><b>${c("appointment")}</b><span>Appointments</span></div><div class="card"><b>Rs ${rev[0]}</b><span>Billed</span></div><div class="card"><b>Rs ${rev[1]}</b><span>Collected</span></div></div>
+ <div class="grid2"><div class="box"><h2>Appointments per department</h2>${dep.map(r=>`<div class="bar"><span>${esc(r[0])}</span><i style="width:${r[1]/mx*60}%"></i><b>${r[1]}</b></div>`).join("")}</div>
+ <div class="box"><h2>Top doctors by completed visits</h2>${table(all(`SELECT d.name doctor, COUNT(*) visits FROM appointment a JOIN doctor d USING(doctor_id) WHERE a.status='Completed' GROUP BY d.doctor_id ORDER BY visits DESC LIMIT 5`))}</div></div>`},
+pat(){const q=window.pq||"";const r=all(`SELECT patient_id id,name,gender,dob,phone,blood_group,address FROM patient WHERE name LIKE ? OR phone LIKE ? ORDER BY id DESC`,["%"+q+"%","%"+q+"%"]);
+ return `${M()}<div class="box"><h2>Register patient</h2><form class="f" onsubmit="addPat(event)"><div><label>Name</label><input name=n required></div><div><label>Gender</label><select name=g><option>F<option>M<option>O</select></div><div><label>Date of birth</label><input type=date name=d required></div><div><label>Phone</label><input name=p required pattern="[0-9]{10}" title="10 digits"></div><div><label>Blood group</label><select name=b><option>A+<option>A-<option>B+<option>B-<option>O+<option>O-<option>AB+<option>AB-</select></div><div><label>Address</label><input name=a></div><button class=b>Add patient</button></form></div>
+ <div class="row"><input style="max-width:280px" placeholder="Search name or phone" value="${esc(q)}" oninput="window.pq=this.value;clearTimeout(window.t);window.t=setTimeout(()=>{render();document.querySelector('input[placeholder^=Search]').focus()},300)"></div>${table(r,v=>`<button class="s d" onclick="del('patient','patient_id',${v[0]})">Delete</button>`)}`},
+doc(){return `${M()}<div class="box"><h2>Add doctor</h2><form class="f" onsubmit="addDoc(event)"><div><label>Name</label><input name=n required></div><div><label>Specialization</label><input name=s required></div><div><label>Department</label><select name=dp>${opts("SELECT dept_id,name FROM department")}</select></div><div><label>Phone</label><input name=p></div><div><label>Fee (Rs)</label><input type=number min=0 name=f required></div><button class=b>Add doctor</button></form></div>
+ ${table(all(`SELECT d.doctor_id id,d.name,d.specialization,dep.name department,d.phone,d.fee FROM doctor d JOIN department dep USING(dept_id) ORDER BY id`),v=>`<button class="s d" onclick="del('doctor','doctor_id',${v[0]})">Delete</button>`)}`},
+app(){const s=window.fs||"";return `${M()}<div class="box"><h2>Book appointment</h2><form class="f" onsubmit="addApp(event)"><div><label>Patient</label><select name=p>${opts("SELECT patient_id,name||' (#'||patient_id||')' FROM patient ORDER BY name")}</select></div><div><label>Doctor</label><select name=d>${opts("SELECT doctor_id,name||' - '||specialization FROM doctor")}</select></div><div><label>Date</label><input type=date name=dt required></div><div><label>Reason</label><input name=r></div><button class=b>Book</button></form></div>
+ <div class="row"><select style="max-width:200px" onchange="window.fs=this.value;render()"><option value="">All statuses${["Scheduled","Completed","Cancelled"].map(x=>`<option ${s==x?"selected":""}>${x}`).join("")}</select></div>
+ ${table(all(`SELECT appt_id id,patient,doctor,department,appt_date,status,reason FROM v_appointment WHERE (?='' OR status=?) ORDER BY appt_date DESC`,[s,s]),v=>v[5]=="Scheduled"?`<button class=s onclick="setSt(${v[0]},'Completed')">Complete</button> <button class="s d" onclick="setSt(${v[0]},'Cancelled')">Cancel</button>`:"")}`},
+bill(){return `${M()}<p style="color:var(--mu)">Bills are generated automatically by a database trigger when an appointment is marked Completed.</p>${table(all(`SELECT b.bill_id id,p.name patient,d.name doctor,a.appt_date,b.amount,CASE b.paid WHEN 1 THEN 'Paid' ELSE 'Unpaid' END status FROM bill b JOIN appointment a USING(appt_id) JOIN patient p USING(patient_id) JOIN doctor d USING(doctor_id) ORDER BY b.bill_id DESC`),v=>v[5]=="Unpaid"?`<button class=s onclick="run('UPDATE bill SET paid=1 WHERE bill_id=?',[${v[0]}],'Bill marked paid')">Mark paid</button>`:"")}`},
+sql(){const S=window.samples;return `<div class="box"><h2>SQL console</h2><div class="row"><select id="sel" onchange="if(samples[this.value])$('#q').value=samples[this.value][1]"><option>Choose a sample query...${S.map((s,i)=>`<option value="${i}">${esc(s[0])}`).join("")}</select></div><textarea id="q" spellcheck="false">SELECT * FROM v_appointment LIMIT 10;</textarea><div class="row"><button class=b onclick="runQ()">Run query</button><button class="s" onclick="run(&quot;BEGIN&quot;);msg='Transaction started';render()">BEGIN</button><button class="s" onclick="tx('COMMIT')">COMMIT</button><button class="s" onclick="tx('ROLLBACK')">ROLLBACK</button><button class="s d" onclick="resetDb()">Reset database</button></div><div id="out">${window.lastOut||""}</div></div>`},
+sch(){const t=objs("SELECT name,sql,type FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY CASE type WHEN 'table' THEN 1 WHEN 'view' THEN 2 WHEN 'index' THEN 3 ELSE 4 END,name");
+ return `<div class="box"><h2>Database objects (${t.length})</h2><p style="color:var(--mu)">9 tables, 1 view, 2 indexes, 2 triggers. Click Run on SQL console to explore them.</p>${t.map(o=>`<div><span class="tag">${o.type}</span> <b>${esc(o.name)}</b><pre>${esc(o.sql)}</pre></div>`).join("")}</div>`}};
+window.samples=[
+["Join: appointments with doctor and patient","SELECT p.name AS patient, d.name AS doctor, a.appt_date, a.status\nFROM appointment a JOIN patient p ON a.patient_id=p.patient_id\nJOIN doctor d ON a.doctor_id=d.doctor_id\nORDER BY a.appt_date LIMIT 15;"],
+["Aggregate: revenue per department","SELECT dep.name, COUNT(b.bill_id) bills, SUM(b.amount) revenue\nFROM bill b JOIN appointment a USING(appt_id) JOIN doctor d USING(doctor_id) JOIN department dep USING(dept_id)\nGROUP BY dep.name ORDER BY revenue DESC;"],
+["HAVING: doctors with 4+ appointments","SELECT d.name, COUNT(*) total FROM doctor d JOIN appointment a USING(doctor_id)\nGROUP BY d.doctor_id HAVING COUNT(*)>=4;"],
+["Subquery: patients never admitted","SELECT name FROM patient WHERE patient_id NOT IN (SELECT patient_id FROM admission);"],
+["Subquery: fee above average","SELECT name, fee FROM doctor WHERE fee > (SELECT AVG(fee) FROM doctor);"],
+["Left join: patients with no appointment","SELECT p.name FROM patient p LEFT JOIN appointment a USING(patient_id) WHERE a.appt_id IS NULL;"],
+["Currently admitted patients","SELECT p.name, r.room_type, r.daily_rate, ad.admit_date FROM admission ad JOIN patient p USING(patient_id) JOIN room r USING(room_id) WHERE ad.discharge_date IS NULL;"],
+["Unpaid bills","SELECT * FROM bill WHERE paid=0;"],
+["Trigger demo: complete an appointment","UPDATE appointment SET status='Completed' WHERE status='Scheduled' AND appt_id=(SELECT MIN(appt_id) FROM appointment WHERE status='Scheduled');\nSELECT * FROM bill ORDER BY bill_id DESC LIMIT 3;"],
+["Explain query plan (index usage)","EXPLAIN QUERY PLAN SELECT * FROM appointment WHERE doctor_id=3;"],
+["Constraint demo (fails: invalid gender)","INSERT INTO patient(name,gender,phone) VALUES('Test','X','1111111111');"]];
+function runQ(){const sql=$("#q").value;let out="";try{const r=db.exec(sql);out=r.length?r.map(x=>table({cols:x.columns,rows:x.values})).join(""):'<div class="msg">Statement executed successfully.</div>';save()}catch(e){out=`<div class="msg e">${esc(e.message)}</div>`}window.lastOut=out;$("#out").innerHTML=out}
+function tx(c){try{db.run(c);msg=c+" done";}catch(e){msg="Error: "+e.message}render()}
+function resetDb(){localStorage.removeItem("hospdb");init(true);}
+function del(t,k,id){if(confirm("Delete this record? Related rows may also be deleted."))run(`DELETE FROM ${t} WHERE ${k}=?`,[id],"Record deleted")}
+function setSt(id,s){run("UPDATE appointment SET status=? WHERE appt_id=?",[s,id],"Status updated"+(s=="Completed"?" and bill generated by trigger":""))}
+function fd(e){e.preventDefault();return new FormData(e.target)}
+function addPat(e){const f=fd(e);run("INSERT INTO patient(name,gender,dob,phone,blood_group,address) VALUES(?,?,?,?,?,?)",[f.get("n"),f.get("g"),f.get("d"),f.get("p"),f.get("b"),f.get("a")],"Patient registered")}
+function addDoc(e){const f=fd(e);run("INSERT INTO doctor(name,specialization,phone,fee,dept_id) VALUES(?,?,?,?,?)",[f.get("n"),f.get("s"),f.get("p"),+f.get("f"),+f.get("dp")],"Doctor added")}
+function addApp(e){const f=fd(e);run("INSERT INTO appointment(patient_id,doctor_id,appt_date,reason) VALUES(?,?,?,?)",[+f.get("p"),+f.get("d"),f.get("dt"),f.get("r")],"Appointment booked")}
+const TABS=[["dash","Dashboard"],["pat","Patients"],["doc","Doctors"],["app","Appointments"],["bill","Billing"],["sql","SQL Console"],["sch","Schema"]];
+function render(){$("#nav").innerHTML=TABS.map(t=>`<button class="${t[0]==tab?"on":""}" onclick="go('${t[0]}')">${t[1]}</button>`).join("");$("#m").innerHTML=pages[tab]()}
+function go(t){tab=t;msg="";render()}
+async function init(fresh){const SQL=await initSqlJs();let saved=null;try{saved=fresh?null:localStorage.getItem("hospdb")}catch(e){}
+ if(saved){try{db=new SQL.Database(Uint8Array.from(atob(saved),c=>c.charCodeAt(0)))}catch(e){saved=null}}
+ if(!saved){db=new SQL.Database();db.exec(SCHEMA);db.exec(seedSQL());save()}
+ db.run("PRAGMA foreign_keys=ON");render()}
+init();
+</script></body></html>

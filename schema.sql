@@ -1,0 +1,15 @@
+PRAGMA foreign_keys = ON;
+CREATE TABLE department(dept_id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, location TEXT);
+CREATE TABLE doctor(doctor_id INTEGER PRIMARY KEY, name TEXT NOT NULL, specialization TEXT, phone TEXT, fee REAL NOT NULL CHECK(fee>=0), dept_id INTEGER NOT NULL REFERENCES department(dept_id) ON DELETE RESTRICT);
+CREATE TABLE patient(patient_id INTEGER PRIMARY KEY, name TEXT NOT NULL, gender TEXT CHECK(gender IN('F','M','O')), dob TEXT, phone TEXT UNIQUE, blood_group TEXT, address TEXT);
+CREATE TABLE appointment(appt_id INTEGER PRIMARY KEY, patient_id INTEGER NOT NULL REFERENCES patient(patient_id) ON DELETE CASCADE, doctor_id INTEGER NOT NULL REFERENCES doctor(doctor_id), appt_date TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'Scheduled' CHECK(status IN('Scheduled','Completed','Cancelled')), reason TEXT);
+CREATE TABLE medicine(med_id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, price REAL NOT NULL);
+CREATE TABLE prescription(presc_id INTEGER PRIMARY KEY, appt_id INTEGER NOT NULL REFERENCES appointment(appt_id) ON DELETE CASCADE, med_id INTEGER NOT NULL REFERENCES medicine(med_id), dosage TEXT, days INTEGER);
+CREATE TABLE bill(bill_id INTEGER PRIMARY KEY, appt_id INTEGER NOT NULL UNIQUE REFERENCES appointment(appt_id) ON DELETE CASCADE, amount REAL NOT NULL, paid INTEGER NOT NULL DEFAULT 0 CHECK(paid IN(0,1)));
+CREATE TABLE room(room_id INTEGER PRIMARY KEY, room_type TEXT CHECK(room_type IN('General','Private','ICU')), daily_rate REAL);
+CREATE TABLE admission(adm_id INTEGER PRIMARY KEY, patient_id INTEGER NOT NULL REFERENCES patient(patient_id) ON DELETE CASCADE, room_id INTEGER NOT NULL REFERENCES room(room_id), admit_date TEXT NOT NULL, discharge_date TEXT);
+CREATE INDEX idx_appt_doctor ON appointment(doctor_id);
+CREATE INDEX idx_appt_patient ON appointment(patient_id);
+CREATE VIEW v_appointment AS SELECT a.appt_id, p.name AS patient, d.name AS doctor, dep.name AS department, a.appt_date, a.status, a.reason FROM appointment a JOIN patient p USING(patient_id) JOIN doctor d USING(doctor_id) JOIN department dep USING(dept_id);
+CREATE TRIGGER trg_bill_ins AFTER INSERT ON appointment WHEN NEW.status='Completed' BEGIN INSERT INTO bill(appt_id,amount) SELECT NEW.appt_id, fee FROM doctor WHERE doctor_id=NEW.doctor_id; END;
+CREATE TRIGGER trg_bill_upd AFTER UPDATE OF status ON appointment WHEN NEW.status='Completed' AND OLD.status<>'Completed' BEGIN INSERT OR IGNORE INTO bill(appt_id,amount) SELECT NEW.appt_id, fee FROM doctor WHERE doctor_id=NEW.doctor_id; END;
